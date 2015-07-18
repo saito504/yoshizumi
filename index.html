@@ -3,7 +3,7 @@
 <html lang="ja">
 <head>
 	<meta charset="UTF-8">
-	<title>テスト</title>
+	<title>Yoshizumi's weather news</title>
 	<link rel="stylesheet" type="text/css" href="./style.css">
 	<script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
 	<script src="//maps.google.com/maps/api/js?sensor=true"></script>
@@ -37,7 +37,7 @@
 		</div>
 	</div>
 	<div class="col-xs-9">
-		<h1>ここにタイトル</h1>
+		<h1>Yoshizumi's weather news</h1>
 		<input id="name" class="" type="text" value="名無しだぜ！" placeholder="名を名乗れ">
 	</div>
 </div>
@@ -286,13 +286,16 @@ function weather(lat,lon,index,address,mkr,user){
 			}
 		});
 		//コンテキストメニュー
-		$('li',ul).unbind('contextmenu'); //重複しないようにいったん消す
-		$('li',ul).bind('contextmenu', function() {
-			if (confirm('消しますぜ？')) {
+		// $('li',ul).unbind('contextmenu'); //重複しないようにいったん消す
+		// $('li',ul).bind('contextmenu', function() {
+		$('li',ul).unbind('dblclick'); //重複しないようにいったん消す
+		$('li',ul).bind('dblclick', function() {
+			// if (confirm('詳細なデータの表示を行いますか？')) {
 				var idx = $(this).data('index'); //インデックス取得
-				mkarray[idx].setMap(null); // マーカー削除
-				$(this).hide(); //リストから削除
-			}
+				$.get( 'http://api.openweathermap.org/data/2.5/forecast?lat='+mkarray[idx].position.A+'&lon='+mkarray[idx].position.F+'&cnt=7', function( data ){
+				 	console.log(data);
+				});
+			// }
 			return false;
 		});
 	}).fail(function(data){
