@@ -243,12 +243,15 @@ html,body,#wrapper{
 .modal{
 	position: fixed;
 	width: 50%;
-	height: 50%;
-	margin: 10% 25%;
+	margin: 10% 20% 10% 30%;
 	background: white;
 	top: 0;
 	left: 0;
+	padding: 10px;
 	z-index: 100;
+}
+.modeldata{
+	margin: 0 auto;
 }
 div.show{
 	opacity: 1;
