@@ -1,0 +1,304 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<meta charset="UTF-8">
+	<title>テスト</title>
+	<link rel="stylesheet" type="text/css" href="./style.css">
+	<script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+	<script src="//maps.google.com/maps/api/js?sensor=true"></script>
+	<script src='https://cdn.mlkcca.com/v2.0.0/milkcocoa.js'></script>
+	<script src="./gmaps.js"></script>
+	<!-- bootstrap -->
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+	<script>
+		var favi;
+		$.ajax({
+		    url: 'http://api.openweathermap.org/data/2.5/forecast/daily?lat=39.701851&lon=141.132812&cnt=1',
+		    type: 'GET',
+		    dataType: 'json',
+		}).done(function(data){
+			favi = 'http://openweathermap.org/img/w/' + data.list[0].weather[0].icon + '.png';
+			$('head').append('<link rel="shortcut icon" href="'+favi+'">');
+		});
+	</script>
+	<!-- vewport -->
+	<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+</head>
+<body>
+<div id="wrapper">
+	
+<div id="header" class="row">
+	<div class="col-xs-3">
+		<div class="hb-navigation">
+			<div class="button"></div>
+		</div>
+	</div>
+	<div class="col-xs-9">
+		<h1>ここにタイトル</h1>
+		<input id="name" class="" type="text" value="名無しだぜ！" placeholder="名を名乗れ">
+	</div>
+</div>
+<div id="map"></div>
+<div id="footer">
+	<center>&copy;&nbsp;2015&nbsp;</center>
+</div>
+<div id="side">
+	<div class="side-inner">
+		<ul class="self"></ul>
+		<ul class="user"><p class="slide">USER</p></ul>
+	</div>
+</div>
+</div>
+<script>
+var milkcocoa = new MilkCocoa("maxibw717qb.mlkcca.com");
+var mkData = milkcocoa.dataStore('mk');
+var map,lat,lng,mkr;
+var imgSrc = 'http://openweathermap.org/img/w/';
+var user = 0;
+var mkarray = [];
+$(function(){
+	resize();
+	//デバイス情報取得
+	var ua = navigator.userAgent;
+	//対象の名前が含まれているかで判断
+	if(ua.search(/iPhone/) != -1 || ua.search(/iPod/) != -1 || ua.search(/iPad/) != -1 || ua.search(/Android/) != -1){
+		//PCじゃなければ
+		$('#header h1,#name').addClass('sp');
+	}
+	//フォーカス当てた場合
+	$('#name').focus(function(){
+		$(this).val('');
+	});
+	//フォーカス外れた場合
+	$('#name').focusout(function(){
+		if($(this).val() == ''){
+			$(this).val('名無しだぜ！');
+		}
+	});
+	//userをクリックした場合
+	$('.slide').click(function(){
+		$('.user').toggleClass('open');
+	});
+	// ハンバーグメニュー
+	$('.hb-navigation').click(function(){
+        $('.button').toggleClass('action');
+		$('#side,#map,#header,#footer,#header h1').toggleClass('open');
+    });
+	
+	window.addEventListener("devicemotion", function(event) {
+	    //加速度センサの3軸の値
+	    var x = event.acceleration.x;
+		var flg = 0;
+		if(x > 15 && x < 19 &&flg == 0){
+			GMaps.geolocate({
+				success: function(position) {
+					map.setCenter(position.coords.latitude, position.coords.longitude);
+					if(flg == 0){
+						$('#header').css('background','#9B50BA');
+						var name = $('#name').val() +  'の場所では';
+						//データを送信
+						mkData.send({lat:position.coords.latitude,lon:position.coords.longitude,name:name});
+					}
+					flg++;
+				},
+				error: function(error) {
+					alert('エラーだぜ '+error.message);
+				},
+				not_supported: function() {
+					alert("ジオロケーションサポートしてないでやんす。");
+				},
+			});
+			setTimeout(function(){
+				$('#header').css('background','#007ACC');
+				flg = 0;
+			},2000);
+		}
+	}, false);
+	//データが送られてきたら
+	mkData.on('send', function(sent) {
+	    console.log(sent.value.lat, sent.value.lon);
+		var lat = sent.value.lat;
+		var lng = sent.value.lon;
+		var index = map.markers.length;
+		var name = sent.value.name;
+		user = 1;
+		weather(lat,lng,index,name,mkr,user);
+	});
+});
+
+//画面サイズ変更時
+$(window).resize(function(){
+	resize();
+});
+
+//サイズ調整関数
+function resize(){
+	var windowH = $(window).height();
+	var windowW = $(window).width();
+	var headerH = $('#header').height();
+	var footerH = $('#footer').height();
+	var map = $('#map');
+	var reH = windowH - headerH - footerH + 20;
+	map.height(reH);
+}
+
+$(window).load(function(){
+	map = new GMaps({
+	    div: "#map",
+	    lat: 39.651873,
+	    lng: 141.428677,
+	    zoom: 8,
+	});
+	GMaps.on('click', map.map, function(event) {
+		var index = map.markers.length;
+		lat = event.latLng.lat();
+		lng = event.latLng.lng();
+		var address = '住所を取得できませんでした。';
+		user = 0;
+		//住所取得
+		GMaps.geocode({
+			lat: lat,
+	    	lng: lng,
+			callback: function(results, status) {
+				if (status == 'OK') {
+					address = '';
+					var i = results[0].address_components.length;
+					if(i > 3){
+						address += results[0].address_components[3].long_name;
+						address += results[0].address_components[2].long_name;
+					}else if(i == 3){
+						address += results[0].address_components[2].long_name;
+						address += results[0].address_components[1].long_name;
+					}else if(i == 2){
+						address += results[0].address_components[1].long_name;
+						address += results[0].address_components[0].long_name;
+					}else{
+						address += results[0].address_components[0].long_name;
+					}
+					
+					//console.log(address);
+				}
+				weather(lat,lng,index,address,mkr,user);
+			}
+		});
+	});
+	//現在地ボタン追加
+	map.addControl({
+	  position: 'top_right',
+	  content: '現在地',
+	  style: {
+	    margin: '5px',
+	    padding: '1px 6px',
+	    border: 'solid 1px #5a2953',
+		color: 'white',
+	    background: '#7C4B75'
+	  },
+	  events: {
+	    click: function(){
+			//現在地取得
+			GMaps.geolocate({
+			  success: function(position) {
+				//マップの中心に設定
+			    map.setCenter(position.coords.latitude, position.coords.longitude);
+			  },
+			  error: function(error) {
+			    alert('エラーしてるよ '+error.message);
+			  },
+			  not_supported: function() {
+			    alert("ジオロケーションサポートしてないで。");
+			  },
+			});
+	      //console.log(this);
+	    }
+	  }
+	});
+	//動かした際のイベント処理（ドラッグ・ズームなど）
+	GMaps.on('idle', map.map, function(e) {
+		
+	});
+});
+
+//お天気関数
+function weather(lat,lon,index,address,mkr,user){
+	var img ='';
+	var mk;
+	$.ajax({
+	    url: 'http://api.openweathermap.org/data/2.5/forecast/daily?lat='+lat+'&lon='+lon+'&cnt=6',
+	    type: 'GET',
+	    dataType: 'json',
+	}).done(function(data){
+		//数日分の画像作成
+		jQuery.each(data.list,function(index){
+			if(index != 0){
+				img += '<p class="res"><small>'+index+'日後</small><img class="sub" src="http://openweathermap.org/img/w/' + this.weather[0].icon + '.png"></p>';	
+			}
+		});
+		//マーカー画像作成
+		mk = 'http://openweathermap.org/img/w/' + data.list[0].weather[0].icon + '.png';
+		mkr = map.addMarker({
+			lat: lat,
+			lng: lon,
+			title: '',
+			icon: mk, //マーカー画像をセット
+			animation: google.maps.Animation.DROP, //アニメーション表示
+			infoWindow: {
+				content : '<h6 id="address-' + index + '">' + address + '</h6><div class="info' + index + '">'+img+'</div>'
+			},
+		    click: function(){ //クリックイベント
+				map.setCenter(lat, lon); //マーカーをクリックしたら中心に
+		    },
+			index: index,
+			draggable: true,
+			dragend: function(e){ //ドラッグイベント
+				//消してみる
+				var idx = this.index;
+				this.setMap(null);
+				$('[data-index="'+idx+'"]').hide();
+			}
+		});
+		mkarray.push(mkr); //マーカーを配列におさめておく
+		var list = '<li data-lat="'+lat+'" data-lon="'+lon+'"  data-index="'+index+'"><p>' + address + '</p><img src="'+mk+'"></li>';
+		var ul;
+		if(user == 0){
+			ul = $('.self');
+		}else{
+			ul = $('.user');
+		}
+		$(ul).append(list);
+		//クリックイベント作成
+		$('li',ul).unbind('click'); //重複しないようにいったん消す
+		$('li',ul).bind('click',function(){
+			var lt = $(this).data('lat');
+				var ln = $(this).data('lon');
+			//デバイス情報取得
+			var agent = navigator.userAgent;
+			//対象の名前が含まれているかで判断
+			if(agent.search(/iPhone/) != -1　|| agent.search(/iPod/) != -1 || agent.search(/Android/) != -1){
+				$('.button').toggleClass('action');
+				$('#side,#map,#header,#footer,#header h1').toggleClass('open');
+				map.setCenter(lt, ln);
+			}else{
+				map.setCenter(lt, ln);
+				console.log($(this));
+			}
+		});
+		//コンテキストメニュー
+		$('li',ul).unbind('contextmenu'); //重複しないようにいったん消す
+		$('li',ul).bind('contextmenu', function() {
+			if (confirm('消しますぜ？')) {
+				var idx = $(this).data('index'); //インデックス取得
+				mkarray[idx].setMap(null); // マーカー削除
+				$(this).hide(); //リストから削除
+			}
+			return false;
+		});
+	}).fail(function(data){
+	    alert('通信に失敗しました。');
+	});
+}
+</script>
+</body>
+</html>
