@@ -242,6 +242,7 @@ html,body,#wrapper{
 
 .modal{
 	position: fixed;
+	width: 320px;
 	margin: 10% 20% 10% 30%;
 	background: rgba(255,255,255,0.9);
 	border-radius: 10px;
