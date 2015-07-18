@@ -42,15 +42,16 @@
 	</div>
 </div>
 <div id="map"></div>
-<div id="footer">
-	<center>&copy;&nbsp;2015&nbsp;</center>
-</div>
 <div id="side">
 	<div class="side-inner">
 		<ul class="self"></ul>
 		<ul class="user"><p class="slide">USER</p></ul>
 	</div>
 </div>
+</div>
+
+<div class="modal">
+	
 </div>
 <script>
 var milkcocoa = new MilkCocoa("maxibw717qb.mlkcca.com");
@@ -282,7 +283,7 @@ function weather(lat,lon,index,address,mkr,user){
 				map.setCenter(lt, ln);
 			}else{
 				map.setCenter(lt, ln);
-				console.log($(this));
+				//console.log($(this));
 			}
 		});
 		//コンテキストメニュー
@@ -293,8 +294,15 @@ function weather(lat,lon,index,address,mkr,user){
 			// if (confirm('詳細なデータの表示を行いますか？')) {
 				var idx = $(this).data('index'); //インデックス取得
 				$.get( 'http://api.openweathermap.org/data/2.5/forecast?lat='+mkarray[idx].position.A+'&lon='+mkarray[idx].position.F+'&cnt=7', function( data ){
-				 	console.log(data);
+				 	 $('.modal').html('');
+					 jQuery.each(data.list,function(){
+						 var icon = '';
+						 icon += '<img src="http://openweathermap.org/img/w/' + this.weather[0].icon + '.png">';
+						 $('.modal').append(icon);
+					 });
+					 $('.modal').toggleClass('show');
 				});
+				
 			// }
 			return false;
 		});
