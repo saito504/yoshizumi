@@ -296,8 +296,14 @@ function weather(lat,lon,index,address,mkr,user){
 				$.get( 'http://api.openweathermap.org/data/2.5/forecast?lat='+mkarray[idx].position.A+'&lon='+mkarray[idx].position.F+'&cnt=7', function( data ){
 				 	 $('.modal').html('');
 					 jQuery.each(data.list,function(){
+						 var rain = this.rain['3h'] + ' mm';
+						 if( !rain ){ rain = '0 mm'; } 
 						 var icon = '';
+						 icon += '<div class="modaldata">';
+						 icon += ' time: ' + this.dt_txt.slice(-8);
 						 icon += '<img src="http://openweathermap.org/img/w/' + this.weather[0].icon + '.png">';
+						 icon += ' Precipitation: '+ rain;
+						 icon += '</div">';
 						 $('.modal').append(icon);
 					 });
 					 $('.modal').toggleClass('show');
